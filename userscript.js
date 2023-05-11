@@ -5,20 +5,31 @@
 // @description  人間がやらんでいい作業は人間がやるな
 // @author       GIG SCHOOL
 // @match        https://miraiseed1.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed1.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed2.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed2.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed3.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed3.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed4.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed4.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed5.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed5.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed6.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed6.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed7.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed7.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed8.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed8.benesse.ne.jp/seed/vw020201/
 // @match        https://miraiseed9.benesse.ne.jp/seed/*/displayLogin/*
+// @match        https://miraiseed9.benesse.ne.jp/seed/vw020201/
+
 // @icon
 
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @run-at       document-end
 // ==/UserScript==
+let mode = "" // login | service
 window.onload = () => {
   (function () {
     "use strict";
@@ -27,12 +38,27 @@ window.onload = () => {
     if (
       URL.match(
         /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed\/.+\/displayLogin\/\d+/gi
-      ) === null
+      ) !== null ||
+      URL.match(
+        /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed\/vw020201.+/gi
+      ) !== null
     ) {
+      mode = "login"
+    }else{
+      console.log("not login mode")
       return;
     }
-    console.log("ミライシード　ログイン画面");
+    if(mode==="login"){
+      console.log("ミライシード　ログイン画面");
+      login_view();
+    }
 
+
+  })();
+};
+
+
+const login_view = () => {
     /**-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
      *
      *       　ログインデータ　ここから
@@ -125,5 +151,4 @@ window.onload = () => {
         loginBtn.click();
       });
     }
-  })();
-};
+}
