@@ -1,28 +1,10 @@
 // ==UserScript==
 // @name         miraiseed one-shot-login for GIGA
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  人間がやらんでいい作業は人間がやるな
 // @author       GIG SCHOOL
-// @match        https://miraiseed1.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed1.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed2.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed2.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed3.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed3.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed4.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed4.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed5.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed5.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed6.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed6.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed7.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed7.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed8.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed8.benesse.ne.jp/seed/vw020201/
-// @match        https://miraiseed9.benesse.ne.jp/seed/*/displayLogin/*
-// @match        https://miraiseed9.benesse.ne.jp/seed/vw020201/
-
+// @include      /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed\/.+/
 // @icon
 
 // @grant        GM_addStyle
@@ -44,18 +26,61 @@ window.onload = () => {
       ) !== null
     ) {
       mode = "login"
+    }else if(
+        URL.match(
+            /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed\/vw03\d+/gi
+        )
+    ){
+        mode = "service"
+    }else if(
+        URL.match(
+            /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed\/errorPage\//gi
+        )
+    ){
+        console.log("error page url parse")
+        const baseurl = /(https:\/\/|http:\/\/|)miraiseed\d+\.benesse\.ne\.jp\/seed/gi
+        const a = `${URL.match(baseurl)[0]}/vw020101/displayLogin/1`
+        location.href = a;
+        return;
     }else{
-      console.log("not login mode")
-      return;
+        console.log("not miraiseed");
+        return;
     }
     if(mode==="login"){
       console.log("ミライシード　ログイン画面");
       login_view();
+    }else if(mode === "service"){
+      console.log("ミライシード　管理者画面");
+      service_view();
+    }else{
+      console.log("nothing to do");
+      return;
     }
-
-
   })();
 };
+
+// keywordでフィルタリング
+const filterSchoolList = (data, keyword) => {
+    if(keyword === ""){
+        return data.map(row =>{
+            const m = new Map();
+            m.set("SchoolName", row[0]);
+            m.set("UserNumber", row[1]);
+            m.set("UserPass", row[2]);
+            return m;
+        });
+    }
+    // プログラムのための整形（追加する人間のためじゃないよ）
+    keyword = keyword.replaceAll(" ", "").replaceAll("　", "");
+    const re = new RegExp(keyword);
+    return data.filter((row) => row.length === 3 && re.test(row[0])).map(row =>{
+        const m = new Map();
+        m.set("SchoolName", row[0]);
+        m.set("UserNumber", row[1]);
+        m.set("UserPass", row[2]);
+        return m;
+    });
+}
 
 
 const login_view = () => {
@@ -77,15 +102,7 @@ const login_view = () => {
      *       　ログインデータ　ここまで
      *
      * -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-     */ // プログラムのための整形（追加する人間のためじゃないよ）
-    const schoolInfo = data.map((row) => {
-      if (row.length !== 3) row = ["-- INVALID --", "", ""];
-      const m = new Map();
-      m.set("SchoolName", row[0]);
-      m.set("UserNumber", row[1]);
-      m.set("UserPass", row[2]);
-      return m;
-    });
+     */
 
     // dropdownmeu追加するためにbootstrap使う
     const head = document.querySelector("head");
@@ -113,12 +130,6 @@ const login_view = () => {
     );
     jsSrc4BS.setAttribute("crossorigin", "anonymous");
 
-    //
-    const oneShotLoginList = schoolInfo.map((school, idx) => {
-      return `<div class="dropdown-item lead border-bottom pre-auto" name="onsehot" id="btn_${idx}">${school.get(
-        "SchoolName"
-      )}</div>`;
-    });
     // ログイン情報をセット
     const login_button_go = `
     <div class="pt-5 px-5">
@@ -132,8 +143,13 @@ const login_view = () => {
             ONESHOT LOGIN
         </span>
         </button>
-        <div class="dropdown-menu" aria-labelledby="oneshot_btn" style="height:500px; overflow: auto;">
-            ${oneShotLoginList.join("")}
+        <div class="dropdown-menu" aria-labelledby="oneshot_btn" style="max-height: 500px; overflow: auto; position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 42px);padding-top: 0rem;">
+          <div class="sticky-top"  style="width: 100%; background-color: #fff; ">
+            <input type="text" id="keyword" style="margin: 1em;" placeholder="学校名で検索">
+          </div>
+          <div>
+            <div id="listInSubMenu"></div>
+          </div>
         </div>
         </div>
     </div>
@@ -142,13 +158,83 @@ const login_view = () => {
     document
       .querySelector("header")
       .insertAdjacentHTML("afterend", login_button_go);
-
     const loginBtn = document.querySelector("input.btn");
-    for (const [idx, school] of schoolInfo.entries()) {
-      document.getElementById(`btn_${idx}`).addEventListener("click", (e) => {
-        document.querySelector("input.number").value = school.get("UserNumber");
-        document.querySelector("input.pass").value = school.get("UserPass");
-        loginBtn.click();
-      });
-    }
+    
+    let preserved_elements = [];
+
+    document
+        .getElementById("keyword")
+        .addEventListener("change", e=>{
+            const listInSubmenu = document.getElementById("listInSubMenu");
+            while (listInSubmenu.firstChild) {
+                listInSubmenu.removeChild(listInSubmenu.lastChild);
+            };
+            //　イベントハンドラわからんから上書きしちゃう
+            preserved_elements.forEach((ele, idx) => {
+                console.log(`idx: ${idx}`)
+                ele.removeEventListener("click", ()=>{})
+                ele.removeEventListener("focus", ()=>{})
+            });
+            preserved_elements = [];
+
+            const oneShotLoginList = filterSchoolList(data, e.target.value)
+            const schoolInfo = oneShotLoginList.map((school, idx) => {
+                return `<div class="dropdown-item lead border-bottom pre-auto btn-light" type="button" name="onsehot" tabindex="0" id="btn_${idx}">${school.get(
+                  "SchoolName"
+                )}</div>`;
+            });
+        
+            listInSubmenu.insertAdjacentHTML("afterbegin", schoolInfo.join(""))
+        
+            for (const [idx, school] of oneShotLoginList.entries()) {
+                document.getElementById(`btn_${idx}`)
+                    .addEventListener("click", (e) => {
+                        document.querySelector("input.number").value = school.get("UserNumber");
+                        document.querySelector("input.pass").value = school.get("UserPass");
+                        loginBtn.click();
+                    });
+
+                // document.getElementById(`btn_${idx}`)
+                //     .addEventListener("focus", (e) => {
+                //         window.document.onkeydown = ee => {
+                //             if (ee.key === 'Enter') {
+                //                 document.querySelector("input.number").value = school.get("UserNumber");
+                //                 document.querySelector("input.pass").value = school.get("UserPass");
+                //                 loginBtn.click();        
+                //             }
+                //         }
+                //     });
+                preserved_elements = [...preserved_elements, document.getElementById(`btn_${idx}`)];
+            }
+        });
+}
+
+
+const service_view = () =>{
+    // タイマー表示したい
+    const t = `
+        <div class="pt-5 px-5">
+            <p>（タイムアウト避け）リロードまで <span id="intervalTimer"></span> 秒</p>
+        </div>
+    `;
+
+    // 10分で切れるので9分30秒でとりあえずホームへ飛ばす
+    let countdown = 60 * 9 + 30;
+
+    document
+        .querySelector(".header")
+        .insertAdjacentHTML("afterend", t);
+        
+    (()=>{
+        setInterval(()=>{
+            if(countdown <= 0)location.href = location.href
+            var mm = Math.floor(countdown / 60).toString().padStart(2,"0");
+            var ss = (countdown % 60).toString().padStart(2, "0");
+            var timer_area = document.getElementById('intervalTimer');
+            timer_area.style.fontSize = "24pt";
+            timer_area.style.color = "red";
+            timer_area.innerHTML = `${mm}:${ss}`;
+            countdown--;
+        }, 1000)
+    })();
 }
