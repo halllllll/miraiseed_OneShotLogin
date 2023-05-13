@@ -219,8 +219,8 @@ const service_view = () =>{
         </div>
     `;
 
-    // 10分で切れるので9分30秒でとりあえずホームへ飛ばす
-    let countdown = 60 * 9 + 30;
+    // 5分で切れるので4分30秒でとりあえずリロードする
+    let countdown = 60 * 4 + 30;
 
     document
         .querySelector(".header")
