@@ -134,7 +134,7 @@ const login_view = () => {
     const login_button_go = `
     <div class="pt-5 px-5">
         <div class="dropdown">
-        <button id="oneshot_btn" class="btn btn-lg btn-outline-secondary dropdwon-toggle py-2 px-4" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button id="oneshot_btn" class="btn btn-lg dropdwon-toggle py-2 px-4" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span>
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-activity" width="30" height="30" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -144,8 +144,8 @@ const login_view = () => {
         </span>
         </button>
         <div class="dropdown-menu" aria-labelledby="oneshot_btn" style="max-height: 500px; overflow: auto; position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 42px);padding-top: 0rem;">
-          <div class="sticky-top"  style="width: 100%; background-color: #fff; ">
-            <input type="text" id="keyword" style="margin: 1em;" placeholder="学校名で検索">
+          <div class="sticky-top"  style="margin-top: 1em; margin-bottom: 1em; display: flex; justify-content: center; width: fit-content; background-color: #fff; ">
+            <p style="margin: .5em;">学校名：<input type="text" id="keyword" style="padding-right: 1em; width: 100%;" placeholder="半角/全角spaceで全件表示"><p>
           </div>
           <div>
             <div id="listInSubMenu"></div>
@@ -164,7 +164,7 @@ const login_view = () => {
 
     document
         .getElementById("keyword")
-        .addEventListener("change", e=>{
+        .addEventListener("change", e => {
             const listInSubmenu = document.getElementById("listInSubMenu");
             while (listInSubmenu.firstChild) {
                 listInSubmenu.removeChild(listInSubmenu.lastChild);
@@ -194,16 +194,17 @@ const login_view = () => {
                         loginBtn.click();
                     });
 
-                // document.getElementById(`btn_${idx}`)
-                //     .addEventListener("focus", (e) => {
-                //         window.document.onkeydown = ee => {
-                //             if (ee.key === 'Enter') {
-                //                 document.querySelector("input.number").value = school.get("UserNumber");
-                //                 document.querySelector("input.pass").value = school.get("UserPass");
-                //                 loginBtn.click();        
-                //             }
-                //         }
-                //     });
+                document.getElementById(`btn_${idx}`)
+                    .addEventListener("focus", (e) => {
+                        window.document.onkeydown = ee => {
+                            if (ee.key === 'Enter') {
+                                document.querySelector("input.number").value = school.get("UserNumber");
+                                document.querySelector("input.pass").value = school.get("UserPass");
+                                console.log("学校名: ", school.get("SchoolName"));
+                                loginBtn.click();        
+                            }
+                        }
+                    });
                 preserved_elements = [...preserved_elements, document.getElementById(`btn_${idx}`)];
             }
         });
